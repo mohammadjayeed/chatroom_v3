@@ -1,31 +1,44 @@
 {{chatroom.name}}
 
-<form method = 'POST'>
-    <input type="text" name = "message" placeholder = "Enter Message">
-    <button type = "submit"> Send </button>
-
+<form method="POST">
+  <input
+    id="input-field"
+    type="text"
+    name="message"
+    placeholder="Enter Message"
+  />
+  <button id="send-button" type="submit">Send</button>
 </form>
 {{chatroom.slug | json_script:'json-chatroomname'}}
+{{request.user.username | json_script:'json-username'}}
 
 <script>
+  const chatRoomName = JSON.parse(
+    document.getElementById('json-chatroomname').textContent
+  );
+  const username = JSON.parse(document.getElementById('json-username').textContent);
 
-    const chatRoomName = JSON.parse(document.getElementById('json-chatroomname').textContent);
-    const chatSocket = new WebSocket(
-        'ws://'
-        +window.location.host
-        +'/ws/'
-        +chatRoomName
-        +'/'
+  const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/' + chatRoomName + '/'
+  );
+  chatSocket.onmessage = function (e) {
+    console.log('this is a message');
+  };
+  chatSocket.onclose = function (e) {
+    console.log('socket closed');
+  };
 
+  document.getElementById('send-button').onclick = function (e) {
+    e.preventDefault();
+    const message = document.getElementById('input-field');
+    console.log(message);
 
-    );
-    chatSocket.onmessage = function(e){
+    chatSocket.send(JSON.stringify({
+        'message':message,
+        'username':username,
+        'room': chatRoomName
 
-        console.log('this is a message');
-
-    }
-    chatSocket.onclose = function(e){
-
-        console.log('socket closed');
-    }
+    }));
+    message.value = '';
+  };
 </script>
